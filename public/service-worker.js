@@ -1,23 +1,18 @@
 const FILES_TO_CACHE = [
   '/',
+  'styles,css',
   '/index.html',
-  '/favorites.html',
-  '/topic.html',
-  '/assets/css/style.css',
-  '/dist/app.bundle.js',
-  '/dist/favorites.bundle.js',
-  '/dist/topic.bundle.js',
-  'https://fonts.googleapis.com/css?family=Istok+Web|Montserrat:800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
+  '/indexedDB.js',
+
 ];
 
-const PRECACHE = 'precache-v1';
+const STATIC_CACHE = 'static-v2';
 const RUNTIME = 'runtime';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
-      .open(PRECACHE)
+      .open(STATIC_CACHE)
       .then((cache) => cache.addAll(FILES_TO_CACHE))
       .then(self.skipWaiting())
   );
@@ -25,7 +20,7 @@ self.addEventListener('install', (event) => {
 
 // The activate handler takes care of cleaning up old caches.
 self.addEventListener('activate', (event) => {
-  const currentCaches = [PRECACHE, RUNTIME];
+  const currentCaches = [STATIC_CACHE, RUNTIME];
   event.waitUntil(
     caches
       .keys()
@@ -43,22 +38,50 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.url.startsWith(self.location.origin)) {
+self.addEventListener("fetch", event => {
+  // non GET requests are not cached and requests to other origins are not cached
+  if (
+    event.request.method !== "GET" ||
+    !event.request.url.startsWith(self.location.origin)
+  ) {
+    console.log(event)
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+      fetch(event.request)
+        .catch(err => {
+          console.log('inside catch ', err)
+        })
+    );
+    return;
+  }
 
-        return caches.open(RUNTIME).then((cache) => {
-          return fetch(event.request).then((response) => {
-            return cache.put(event.request, response.clone()).then(() => {
-              return response;
-            });
-          });
-        });
+  if (event.request.url.includes("/api/transaction")) {
+    console.log(event)
+    event.respondWith(
+      caches.open(RUNTIME_CACHE).then(cache => {
+        return fetch(event.request)
+          .then(response => {
+            cache.put(event.request, response.clone());
+            return response;
+          })
+          .catch(() => caches.match(event.request));
       })
     );
+    return;
   }
-});
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return caches.open(RUNTIME_CACHE).then(cache => {
+        return fetch(event.request).then(response => {
+          return cache.put(event.request, response.clone()).then(() => {
+            return response;
+          });
+        });
+      });
+    })
+  );
+})
