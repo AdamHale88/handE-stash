@@ -40,19 +40,12 @@ to install our depenedencies
 ```node
 $ npm run start 
 ```
-this will invoke the function to launch the command prompt.
-
-Simply follow the prompt methods and Quit at any point to exit.
-
-
 ## Tests
 Currently no writen test availble.
 
-
-
 ## How to Contribute
 
-- [Repo](https://github.com/AdamHale88/poly_trax "Poly Trax")
+- [Repo](https://github.com/AdamHale88/budget_io "Poly Trax")
 
 
 ## 🤝 Support
