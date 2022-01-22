@@ -1,4 +1,4 @@
-const FILES_TO_CACHE = ["/", "styles,css", "/index.html", "/indexedDB.js"];
+const FILES_TO_CACHE = ["/", "styles.css", "/index.html", "/indexedDB.js"];
 
 const STATIC_CACHE = "static-cache-v1";
 const RUNTIME = "runtime-cache";
