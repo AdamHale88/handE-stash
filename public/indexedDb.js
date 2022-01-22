@@ -17,7 +17,7 @@ request.onsuccess = (e) => {
 request.onerror = (e) => {
   console.log(`Error ${e.target.errorCode}`);
 };
-
+console.log(data)
 const saveTransaction = (data) => {
   const transaction = db.transaction(["transaction"], "readwrite");
   const store = transaction.objectStore("transaction");
