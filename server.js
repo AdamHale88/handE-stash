@@ -9,16 +9,19 @@ const app = express();
 
 app.use(logger("dev"));
 
+if (process.env.NODE_ENV !== 'production') { require('dotenv').config() }
 app.use(compression());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://localhost/budget", {
-  useNewUrlParser: true,
-  useFindAndModify: false,
+// mongoose DB credentials
+mongoose.connect(process.env.MONGODB_URI ,{ 
+  useNewUrlParser: true, 
+  useUnifiedTopology: true,
 });
+
 
 // routes
 app.use(require("./routes/api.js"));
