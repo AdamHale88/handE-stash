@@ -16,9 +16,9 @@ fetch("/api/transaction")
 
 function populateTotal() {
   // reduce transaction amounts to a single total value
-  let total = transactions.reduce((total, t => {
+  let total = transactions.reduce(total, t => {
     return total + parseInt(t.value);
-  }), 0);
+  }, 0);
 
   let totalEl = document.querySelector("#total");
   totalEl.textContent = total;
@@ -46,13 +46,13 @@ function populateChart() {
   let sum = 0;
 
   // create date labels for chart
-  let labels = reversed.map((t) => {
+  let labels = reversed.map(t => {
     let date = new Date(t.date);
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   });
 
   // create incremental values for chart
-  let data = reversed.map((t) => {
+  let data = reversed.map(t => {
     sum += parseInt(t.value);
     return sum;
   });
