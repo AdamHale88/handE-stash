@@ -1,15 +1,9 @@
-const FILES_TO_CACHE = [
-  '/',
-  'styles,css',
-  '/index.html',
-  '/indexedDB.js',
+const FILES_TO_CACHE = ["/", "styles,css", "/index.html", "/indexedDB.js"];
 
-];
+const STATIC_CACHE = "static-v2";
+const RUNTIME = "runtime";
 
-const STATIC_CACHE = 'static-v2';
-const RUNTIME = 'runtime';
-
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
@@ -19,13 +13,15 @@ self.addEventListener('install', (event) => {
 });
 
 // The activate handler takes care of cleaning up old caches.
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   const currentCaches = [STATIC_CACHE, RUNTIME];
   event.waitUntil(
     caches
       .keys()
       .then((cacheNames) => {
-        return cacheNames.filter((cacheName) => !currentCaches.includes(cacheName));
+        return cacheNames.filter(
+          (cacheName) => !currentCaches.includes(cacheName)
+        );
       })
       .then((cachesToDelete) => {
         return Promise.all(
@@ -38,28 +34,27 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener("fetch", event => {
+self.addEventListener("fetch", (event) => {
   // non GET requests are not cached and requests to other origins are not cached
   if (
     event.request.method !== "GET" ||
     !event.request.url.startsWith(self.location.origin)
   ) {
-    console.log(event)
+    console.log(event);
     event.respondWith(
-      fetch(event.request)
-        .catch(err => {
-          console.log('inside catch ', err)
-        })
+      fetch(event.request).catch((err) => {
+        console.log("inside catch ", err);
+      })
     );
     return;
   }
 
   if (event.request.url.includes("/api/transaction")) {
-    console.log(event)
+    console.log(event);
     event.respondWith(
-      caches.open(RUNTIME_CACHE).then(cache => {
+      caches.open(RUNTIME_CACHE).then((cache) => {
         return fetch(event.request)
-          .then(response => {
+          .then((response) => {
             cache.put(event.request, response.clone());
             return response;
           })
@@ -70,13 +65,13 @@ self.addEventListener("fetch", event => {
   }
 
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return caches.open(RUNTIME_CACHE).then(cache => {
-        return fetch(event.request).then(response => {
+      return caches.open(RUNTIME_CACHE).then((cache) => {
+        return fetch(event.request).then((response) => {
           return cache.put(event.request, response.clone()).then(() => {
             return response;
           });
@@ -84,4 +79,4 @@ self.addEventListener("fetch", event => {
       });
     })
   );
-})
+});
