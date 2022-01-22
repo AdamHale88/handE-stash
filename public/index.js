@@ -1,18 +1,52 @@
 let transactions = [];
+let offlineTransactions = [];
+let objectStore
 let myChart;
 
 fetch("/api/transaction")
-  .then((response) => {
+  .then(response => {
     return response.json();
   })
-  .then((data) => {
+  .then(data => {
     // save db data on global variable
     transactions = data;
 
     populateTotal();
     populateTable();
     populateChart();
-  });
+  })
+  .catch(err => {
+    transactions = objectStore.getAll()
+  })
+function saveRecord(data) {
+  console.log(data)
+  if (!window.indexedDB) {
+    console.log('No support for indexeddb')
+  } else {
+    let db
+    let req = indexedDB.open('transactionDB', 3)
+    let transaction
+    req.onerror = event => {
+      console.log("Why didn't you allow my web app to use IndexedDB?!")
+    }
+    req.onsuccess = async event => {
+      db = event.target.result
+      transaction = db.transaction(["transactions"], 'readwrite');
+      
+      objectStore = transaction.objectStore('transactions')
+      offlineTransactions.unshift(data)
+      objectStore.add(data)
+      
+    }
+    req.onupgradeneeded = event => {
+      db = event.target.result
+      let objectStore = db.createObjectStore("transactions", { autoIncrement : true });
+      objectStore.add(data)
+    }
+
+
+  }
+}
 
 function populateTotal() {
   // reduce transaction amounts to a single total value
@@ -28,7 +62,7 @@ function populateTable() {
   let tbody = document.querySelector("#tbody");
   tbody.innerHTML = "";
 
-  transactions.forEach((transaction) => {
+  transactions.forEach(transaction => {
     // create and populate a table row
     let tr = document.createElement("tr");
     tr.innerHTML = `
@@ -46,13 +80,13 @@ function populateChart() {
   let sum = 0;
 
   // create date labels for chart
-  let labels = reversed.map((t) => {
+  let labels = reversed.map(t => {
     let date = new Date(t.date);
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   });
 
   // create incremental values for chart
-  let data = reversed.map((t) => {
+  let data = reversed.map(t => {
     sum += parseInt(t.value);
     return sum;
   });
@@ -65,18 +99,16 @@ function populateChart() {
   let ctx = document.getElementById("myChart").getContext("2d");
 
   myChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Total Over Time",
-          fill: true,
-          backgroundColor: "#6666ff",
-          data,
-        },
-      ],
-    },
+    type: 'line',
+      data: {
+        labels,
+        datasets: [{
+            label: "Total Over Time",
+            fill: true,
+            backgroundColor: "#6666ff",
+            data
+        }]
+    }
   });
 }
 
@@ -89,7 +121,8 @@ function sendTransaction(isAdding) {
   if (nameEl.value === "" || amountEl.value === "") {
     errorEl.textContent = "Missing Information";
     return;
-  } else {
+  }
+  else {
     errorEl.textContent = "";
   }
 
@@ -97,7 +130,7 @@ function sendTransaction(isAdding) {
   let transaction = {
     name: nameEl.value,
     value: amountEl.value,
-    date: new Date().toISOString(),
+    date: new Date().toISOString()
   };
 
   // if subtracting funds, convert amount to negative number
@@ -112,42 +145,59 @@ function sendTransaction(isAdding) {
   populateChart();
   populateTable();
   populateTotal();
-
+  
   // also send to server
   fetch("/api/transaction", {
     method: "POST",
     body: JSON.stringify(transaction),
     headers: {
       Accept: "application/json, text/plain, */*",
-      "Content-Type": "application/json",
-    },
+      "Content-Type": "application/json"
+    }
   })
-    .then((response) => {
-      return response.json();
-    })
-    .then((data) => {
-      if (data.errors) {
-        errorEl.textContent = "Missing Information";
-      } else {
-        // clear form
-        nameEl.value = "";
-        amountEl.value = "";
-      }
-    })
-    .catch((err) => {
-      // fetch failed, so save in indexed db
-      saveRecord(transaction);
-
+  .then(response => {
+    return response.json();
+  })
+  .then(data => {
+    if (data.errors) {
+      errorEl.textContent = "Missing Information";
+    }
+    else {
       // clear form
       nameEl.value = "";
       amountEl.value = "";
-    });
+      if (offlineTransactions.length === 0) {
+
+      } else {
+        for (let t of offlineTransactions) {
+          fetch("/api/transaction", {
+            method: "POST",
+            body: JSON.stringify(t),
+            headers: {
+              Accept: "application/json, text/plain, */*",
+              "Content-Type": "application/json"
+            }
+          })
+        }
+        offlineTransactions = []
+
+      }
+    }
+  })
+  .catch(err => {
+    // fetch failed, so save in indexed db
+    saveRecord(transaction);
+
+    // clear form
+    nameEl.value = "";
+    amountEl.value = "";
+  });
 }
 
-document.querySelector("#add-btn").onclick = function () {
+document.querySelector("#add-btn").onclick = function() {
   sendTransaction(true);
 };
 
-document.querySelector("#sub-btn").onclick = function () {
+document.querySelector("#sub-btn").onclick = function() {
   sendTransaction(false);
 };
