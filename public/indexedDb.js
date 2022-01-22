@@ -3,7 +3,7 @@ const request = window.indexedDB.open("budget", 1);
 
 request.onupgradeneeded = function (e) {
   const db = request.result;
-  db.createObjectStore("transaction", { autoIncrement: true });
+  db.createObjectStore("transactions", { autoIncrement: true });
 };
 
 request.onsuccess = (e) => {
@@ -19,20 +19,20 @@ request.onerror = (e) => {
 };
 console.log(data)
 const saveTransaction = (data) => {
-  const transaction = db.transaction(["transaction"], "readwrite");
-  const store = transaction.objectStore("transaction");
+  const transaction = db.transaction(["transactions"], "readwrite");
+  const store = transaction.objectStore("transactions");
   store.add(data);
 };
 
 function checkDatabase() {
-  const transaction = db.transaction(["transaction"], "readwrite");
-  const store = transaction.objectStore("transaction");
+  const transaction = db.transaction(["transactions"], "readwrite");
+  const store = transaction.objectStore("transactions");
   const getAll = store.getAll();
 
   getAll.onsuccess = async () => {
     try {
       if (getAll.result.length > 0) {
-        const response = await fetch("/api/transaction/bulk", {
+        const response = await fetch("/api/transactions/bulk", {
           method: "POST",
           body: JSON.stringify(getAll.result),
           headers: {
@@ -42,9 +42,9 @@ function checkDatabase() {
         });
         response.json();
 
-        const transaction = db.transaction(["transaction"], "readwrite");
+        const transaction = db.transaction(["transactions"], "readwrite");
 
-        const store = transaction.objectStore("transaction");
+        const store = transaction.objectStore("transactions");
 
         store.clear();
       }
