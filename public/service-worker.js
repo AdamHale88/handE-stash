@@ -1,7 +1,7 @@
 const FILES_TO_CACHE = ["/", "styles,css", "/index.html", "/indexedDB.js"];
 
-const STATIC_CACHE = "static-v2";
-const RUNTIME = "runtime";
+const STATIC_CACHE = "static-cache-v1";
+const RUNTIME = "runtime-cache";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
