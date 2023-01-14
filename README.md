@@ -1,7 +1,7 @@
-# <h1 align="center">Budget IO</h1>
+# <h1 align="center">Hand-E Stash</h1>
 
 ## Description
-- [Demo ](https://dashboard.heroku.com/apps/budgetiotracker "Demo View")
+- [Demo ]( "Demo View")
 
 <p>PWA Budget Tracking </p>
 
